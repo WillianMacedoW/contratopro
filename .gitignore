@@ -16,6 +16,24 @@ dist-ssr
 !.env.example
 crud_test.mjs
 .claude/
+# arquivos de teste/debug
+b3.json
+base.json
+base2.json
+c_cnpj.json
+consulta.json
+consulta2.json
+consulta3.json
+o.json
+orgaos.json
+orgaoteste.json
+p.json
+swagger.json
+t.json
+t2.json
+tc.json
+test*.json
+build_log.txt
 
 # Editor directories and files
 .vscode/*

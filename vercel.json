@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/pncp/:path*",
+      "destination": "https://pncp.gov.br/api/consulta/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
