@@ -1,0 +1,27 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1875rem 0.5rem;
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+/* Status do contrato */
+.badge-ativo    { background-color: var(--green-dim);   color: var(--green);  border-color: var(--green-border);  }
+.badge-vencendo { background-color: var(--amber-dim);   color: var(--amber);  border-color: var(--amber-border);  }
+.badge-vencido  { background-color: var(--red-dim);     color: var(--red);    border-color: var(--red-border);    }
+.badge-renovado { background-color: var(--purple-dim);  color: var(--purple); border-color: var(--purple-border); }
+
+/* Nível de alerta */
+.badge-alerta-critico     { background-color: var(--red-dim);    color: var(--red);    border-color: var(--red-border);    }
+.badge-alerta-atencao     { background-color: var(--amber-dim);  color: var(--amber);  border-color: var(--amber-border);  }
+.badge-alerta-planejamento{ background-color: var(--amber-dim);  color: var(--amber);  border-color: var(--amber-border);  opacity: 0.8; }
+.badge-alerta-ok          { background-color: var(--green-dim);  color: var(--green);  border-color: var(--green-border);  }
+.badge-alerta-vencido     { background-color: var(--red-dim);    color: var(--red);    border-color: var(--red-border);    }
+.badge-alerta-renovado    { background-color: var(--purple-dim); color: var(--purple); border-color: var(--purple-border); }

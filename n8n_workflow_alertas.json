@@ -1,0 +1,85 @@
+{
+  "name": "ContratoPro — Alertas Automáticos de Vencimento",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 8 * * *" }]
+        }
+      },
+      "id": "cron-diario",
+      "name": "Todo dia às 08h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const hoje = new Date();\nhoje.setHours(0,0,0,0);\nconst fmt = d => d.toISOString().split('T')[0];\nconst add = n => { const d = new Date(hoje); d.setDate(d.getDate()+n); return fmt(d); };\nreturn [{ json: { d7: add(7), d15: add(15), d40: add(40) } }];"
+      },
+      "id": "calcular-datas",
+      "name": "Calcular Datas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://qwqgcujehfarhemalszo.supabase.co/rest/v1/contratos?select=numero_contrato,fornecedor,objeto,valor_total,data_vencimento,fiscal_nome,fiscal_whatsapp,secretario_nome,secretario_whatsapp,secretarias(nome)&data_vencimento=in.({{ $json.d7 }},{{ $json.d15 }},{{ $json.d40 }})&status=neq.renovado&or=(fiscal_whatsapp.not.is.null,secretario_whatsapp.not.is.null)",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3cWdjdWplaGZhcmhlbWFsc3pvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MDIxMTksImV4cCI6MjA4OTE3ODExOX0.cGLQc8Wm6tLjDxJOTejUKshfjkn_GlnTBS_2u37D1MM" },
+            { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3cWdjdWplaGZhcmhlbWFsc3pvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MDIxMTksImV4cCI6MjA4OTE3ODExOX0.cGLQc8Wm6tLjDxJOTejUKshfjkn_GlnTBS_2u37D1MM" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "buscar-supabase",
+      "name": "Buscar Contratos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const contratos = $input.first().json;\nif (!Array.isArray(contratos) || contratos.length === 0) return [];\n\nconst hoje = new Date(); hoje.setHours(0,0,0,0);\nconst fmt = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v);\nconst fmtData = s => new Date(s+'T12:00:00').toLocaleDateString('pt-BR');\n\nconst saidas = [];\n\nfor (const c of contratos) {\n  const venc = new Date(c.data_vencimento+'T12:00:00');\n  const dias = Math.round((venc - hoje) / 86400000);\n  const emoji = dias <= 7 ? '🔴' : dias <= 15 ? '🟠' : '🟡';\n  const label = dias <= 7 ? 'URGENTE — Vence em 7 dias' : dias <= 15 ? 'ATENÇÃO — Vence em 15 dias' : 'AVISO — Vence em 40 dias';\n\n  const msg = `${emoji} *${label}*\\n\\n` +\n    `📄 *Contrato:* ${c.numero_contrato}\\n` +\n    `🏢 *Fornecedor:* ${c.fornecedor}\\n` +\n    `🏛️ *Secretaria:* ${c.secretarias?.nome || ''}\\n` +\n    `📝 *Objeto:* ${c.objeto}\\n` +\n    `💰 *Valor:* ${fmt(c.valor_total)}\\n` +\n    `📅 *Vencimento:* ${fmtData(c.data_vencimento)}\\n` +\n    `⏳ *Dias restantes:* ${dias}\\n\\n` +\n    `Acesse o ContratoPro e tome as providências necessárias.`;\n\n  if (c.fiscal_whatsapp) saidas.push({ json: { whatsapp: c.fiscal_whatsapp, destinatario: c.fiscal_nome, mensagem: msg } });\n  if (c.secretario_whatsapp && c.secretario_whatsapp !== c.fiscal_whatsapp)\n    saidas.push({ json: { whatsapp: c.secretario_whatsapp, destinatario: c.secretario_nome, mensagem: msg } });\n}\n\nreturn saidas;"
+      },
+      "id": "formatar-mensagens",
+      "name": "Formatar Mensagens",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.infrazap.com.br/api/send-message",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer SEU_TOKEN_INFRAZAP" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"phone\": \"{{ $json.whatsapp }}\",\n  \"message\": \"{{ $json.mensagem }}\",\n  \"instance\": \"SEU_INSTANCE_INFRAZAP\"\n}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "infrazap-send",
+      "name": "Enviar via InfraZap",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1080, 300]
+    }
+  ],
+  "connections": {
+    "Todo dia às 08h":   { "main": [[{ "node": "Calcular Datas",    "type": "main", "index": 0 }]] },
+    "Calcular Datas":    { "main": [[{ "node": "Buscar Contratos",  "type": "main", "index": 0 }]] },
+    "Buscar Contratos":  { "main": [[{ "node": "Formatar Mensagens","type": "main", "index": 0 }]] },
+    "Formatar Mensagens":{ "main": [[{ "node": "Enviar via InfraZap","type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}
