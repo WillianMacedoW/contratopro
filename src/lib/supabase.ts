@@ -49,9 +49,9 @@ const getRelativeDate = (offsetDays: number): string => {
 const inicializarSementeLocal = () => {
   if (!localStorage.getItem('cp_mock_secretarias')) {
     const secretarias = [
-      { id: 's1', nome: 'Secretaria Municipal de Administração', municipio: 'Porto Alegre - RS', whatsapp: '51997519127', email: 'admin@portoalegre.rs.gov.br', created_at: new Date().toISOString() },
-      { id: 's2', nome: 'Secretaria de Educação', municipio: 'Porto Alegre - RS', whatsapp: '51997519127', email: 'educacao@portoalegre.rs.gov.br', created_at: new Date().toISOString() },
-      { id: 's3', nome: 'Secretaria de Saúde', municipio: 'Porto Alegre - RS', whatsapp: '51997519127', email: 'saude@portoalegre.rs.gov.br', created_at: new Date().toISOString() }
+      { id: 's1', nome: 'Secretaria Municipal de Administração', municipio: 'Porto Alegre - RS', whatsapp: '51900000000', email: 'admin@portoalegre.rs.gov.br', created_at: new Date().toISOString() },
+      { id: 's2', nome: 'Secretaria de Educação', municipio: 'Porto Alegre - RS', whatsapp: '51900000000', email: 'educacao@portoalegre.rs.gov.br', created_at: new Date().toISOString() },
+      { id: 's3', nome: 'Secretaria de Saúde', municipio: 'Porto Alegre - RS', whatsapp: '51900000000', email: 'saude@portoalegre.rs.gov.br', created_at: new Date().toISOString() }
     ];
     localStorage.setItem('cp_mock_secretarias', JSON.stringify(secretarias));
   }

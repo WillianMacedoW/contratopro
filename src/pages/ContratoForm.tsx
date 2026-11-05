@@ -18,7 +18,7 @@ interface Secretaria {
 }
 
 const titleCase = (str: string) =>
-  str.toLowerCase().replace(/\b(\p{L})/gu, l => l.toUpperCase());
+  str.toLowerCase().replace(/(^|[^\p{L}\p{N}])(\p{L})/gu, (_, sep, l) => sep + l.toUpperCase());
 
 export const ContratoForm: React.FC<{ isImportMode?: boolean }> = ({ isImportMode = false }) => {
   const navigate = useNavigate();

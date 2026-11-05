@@ -73,9 +73,9 @@ CREATE TABLE IF NOT EXISTS contratos (
 -- 4. Contato de teste para notificações WhatsApp
 INSERT INTO secretarias (nome, municipio, whatsapp, email)
 VALUES
-  ('Secretaria Municipal de Administração', 'Porto Alegre - RS', '51997519127', 'admin@portoalegre.rs.gov.br'),
-  ('Secretaria de Educação',                'Porto Alegre - RS', '51997519127', 'educacao@portoalegre.rs.gov.br'),
-  ('Secretaria de Saúde',                   'Porto Alegre - RS', '51997519127', 'saude@portoalegre.rs.gov.br')
+  ('Secretaria Municipal de Administração', 'Porto Alegre - RS', '51900000000', 'admin@portoalegre.rs.gov.br'),
+  ('Secretaria de Educação',                'Porto Alegre - RS', '51900000000', 'educacao@portoalegre.rs.gov.br'),
+  ('Secretaria de Saúde',                   'Porto Alegre - RS', '51900000000', 'saude@portoalegre.rs.gov.br')
 ON CONFLICT DO NOTHING;
 
 -- 5. Contratos de exemplo para demonstração

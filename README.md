@@ -1,73 +1,57 @@
-# React + TypeScript + Vite
+# ContratoPro
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sistema web para acompanhar contratos públicos municipais. Importa contratos do PNCP, mostra o que vence em breve e confere prazos e limites da Lei 14.133/2021.
 
-Currently, two official plugins are available:
+![Visão geral do ContratoPro](docs/dashboard.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+*Tela do modo demonstração, com dados fictícios.*
 
-## React Compiler
+## O problema
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Contrato que vence sem aditivo deixa a prefeitura com serviço parado ou em situação irregular. O controle costuma ficar em planilha, e o prazo só aparece quando já está em cima.
 
-## Expanding the ESLint configuration
+## O que faz
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+**Alertas por prazo.** Cada contrato recebe um nível pelo vencimento, com a próxima ação indicada.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+| Nível | Prazo | Ação indicada |
+| --- | --- | --- |
+| Crítico | até 30 dias | Emitir termo aditivo (art. 106) |
+| Atenção | 31 a 90 dias | Publicar edital e iniciar licitação |
+| Planejamento | 91 a 180 dias | Planejar o novo processo licitatório |
+| Em dia | mais de 180 dias | Nenhuma ação imediata |
+| Vencido | prazo expirado | Regularizar |
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+**Importação do PNCP.** Descobre os órgãos do município pelo código do IBGE e depois busca os contratos de cada CNPJ, respeitando a janela máxima de 365 dias da API.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+**Painel de conformidade.** Três blocos: publicação no PNCP (art. 94, 20 dias úteis), consumo do limite de dispensa por secretaria e tipo de objeto (art. 75) e calendário de licitações.
+
+**Alertas no WhatsApp.** O fluxo [`n8n_workflow_alertas.json`](n8n_workflow_alertas.json) roda todo dia às 8h, busca os contratos que vencem em 7, 15 e 40 dias e avisa fiscal e secretário.
+
+**Modo demonstração.** Roda sem banco, com dados fictícios no `localStorage`.
+
+![Painel de conformidade legal](docs/conformidade.png)
+
+## Stack
+
+React 19, TypeScript, Vite, React Router, Supabase (Postgres e Auth), n8n e Vercel. A Vercel faz o proxy das chamadas para a API do PNCP (`vercel.json`).
+
+## Como rodar
+
+Testado com Node 24.
+
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Abra o endereço que o Vite mostrar e clique em **Entrar no Modo Demonstração (Local)**.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Para usar um banco próprio, rode `supabase_setup.sql` e `supabase_fix_import.sql` no Supabase e troque a URL e a chave em `src/lib/supabase.ts`.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Limitações
+
+- As políticas de RLS em `supabase_fix_import.sql` são abertas (`USING (true)`), feitas para o MVP. Antes de usar com dados reais, é preciso restringir por usuário autenticado e por perfil. Hoje a separação entre administrador e usuário comum existe só na interface.
+- Os limites de dispensa estão fixos no código (R$ 100 mil para obras, R$ 50 mil para o resto) e não acompanham a atualização anual por decreto.
+- Não há testes automatizados no repositório.
+- O lint ainda aponta erros, em boa parte por uso de `any`.

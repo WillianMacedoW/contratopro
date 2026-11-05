@@ -166,7 +166,7 @@ export const ContratoDetail: React.FC = () => {
   const nivelCfg = NIVEL_ALERTA_CONFIG[nivel];
 
   const titleCase = (str: string) =>
-    str.toLowerCase().replace(/\b(\p{L})/gu, l => l.toUpperCase());
+    str.toLowerCase().replace(/(^|[^\p{L}\p{N}])(\p{L})/gu, (_, sep, l) => sep + l.toUpperCase());
 
   const cnpjExtraido = !contrato.fornecedor_cnpj
     ? (contrato.fornecedor.match(/\((\d{14})\)/) || [])[1] || null

@@ -138,7 +138,7 @@ export const ContratosList: React.FC = () => {
   };
 
   const titleCase = (str: string) =>
-    str.toLowerCase().replace(/\b(\p{L})/gu, l => l.toUpperCase());
+    str.toLowerCase().replace(/(^|[^\p{L}\p{N}])(\p{L})/gu, (_, sep, l) => sep + l.toUpperCase());
 
   const truncate = (str: string, max = 38) =>
     str.length > max ? str.slice(0, max) + '…' : str;
