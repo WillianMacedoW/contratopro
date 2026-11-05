@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, AlertTriangle, Clock, CheckCircle, Search, Filter, ShieldAlert, CalendarClock, Plus } from 'lucide-react';
-import { Card } from '../components/Card';
-import { Table } from '../components/Table';
-import { BadgeAlerta } from '../components/Badge';
+import { Search, Filter, Plus } from 'lucide-react';
+import { ReguaVencimentos } from '../components/ReguaVencimentos';
 import { supabase } from '../lib/supabase';
-import { calcularStatus, calcularNivelAlerta, formatarMoeda } from '../utils/statusUtils';
+import { calcularStatus, calcularNivelAlerta, NIVEL_ALERTA_CONFIG } from '../utils/statusUtils';
 import type { ContratoStatus, NivelAlerta } from '../utils/statusUtils';
 
 interface Contrato {
@@ -23,10 +21,13 @@ interface Contrato {
   nivelAlerta?: NivelAlerta;
 }
 
+const NIVEIS_NA_LEGENDA: NivelAlerta[] = ['vencido', 'critico', 'atencao', 'planejamento', 'ok', 'renovado'];
+
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [contratos, setContratos] = useState<Contrato[]>([]);
   const [filteredData, setFilteredData] = useState<Contrato[]>([]);
+  const [baseFiltrada, setBaseFiltrada] = useState<Contrato[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -83,60 +84,23 @@ export const Dashboard: React.FC = () => {
         : result.filter(c => c.secretaria_id === secretariaFilter);
     }
 
-    if (nivelFilter !== 'todos') {
-      result = result.filter(c => c.nivelAlerta === nivelFilter);
-    }
-
-    setFilteredData(result);
+    setBaseFiltrada(result);
+    setFilteredData(nivelFilter === 'todos' ? result : result.filter(c => c.nivelAlerta === nivelFilter));
   };
 
-  const countNivel = (nivel: NivelAlerta) => filteredData.filter(c => c.nivelAlerta === nivel).length;
+  const limparFiltros = () => {
+    setSearchTerm('');
+    setSecretariaFilter('todas');
+    setNivelFilter('todos');
+  };
 
-  const titleCase = (str: string) =>
-    str.toLowerCase().replace(/(^|[^\p{L}\p{N}])(\p{L})/gu, (_, sep, l) => sep + l.toUpperCase());
+  // A legenda conta o que passou pela busca e pela secretaria, antes do filtro de nível.
+  const countNivel = (nivel: NivelAlerta) => baseFiltrada.filter(c => c.nivelAlerta === nivel).length;
 
-  const truncate = (str: string, max = 38) =>
-    str.length > max ? str.slice(0, max) + '…' : str;
-
-  const columns = [
-    {
-      header: 'Contrato',
-      cell: (c: Contrato) => (
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', color: 'var(--text-mid)' }}>
-          {c.numero_contrato}
-        </span>
-      ),
-    },
-    {
-      header: 'Fornecedor',
-      cell: (c: Contrato) => (
-        <span style={{ fontWeight: 500 }}>{titleCase(c.fornecedor)}</span>
-      ),
-    },
-    {
-      header: 'Secretaria',
-      cell: (c: Contrato) => c.secretarias?.nome
-        ? <span style={{ color: 'var(--text-mid)', fontSize: '0.8125rem' }} title={c.secretarias.nome}>{truncate(titleCase(c.secretarias.nome))}</span>
-        : <span style={{ color: 'var(--text-low)' }}>—</span>,
-    },
-    {
-      header: 'Vencimento',
-      cell: (c: Contrato) => (
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
-          {c.data_vencimento ? new Date(c.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}
-        </span>
-      ),
-    },
-    {
-      header: 'Valor',
-      cell: (c: Contrato) => (
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
-          {formatarMoeda(c.valor_total)}
-        </span>
-      ),
-    },
-    { header: 'Alerta', cell: (c: Contrato) => <BadgeAlerta nivel={c.nivelAlerta || 'ok'} /> },
-  ];
+  const pedemAcao = contratos.filter(c => c.nivelAlerta === 'vencido' || c.nivelAlerta === 'critico').length;
+  const resumo = pedemAcao === 0
+    ? `Nenhum dos ${contratos.length} contratos pede ação agora`
+    : `${pedemAcao} de ${contratos.length} contratos ${pedemAcao === 1 ? 'pede' : 'pedem'} ação agora`;
 
   if (isLoading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', flexDirection: 'column', gap: '1rem' }}>
@@ -150,24 +114,12 @@ export const Dashboard: React.FC = () => {
       {/* Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Visão Geral</h1>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-            {contratos.length} contratos cadastrados
-          </p>
+          <h1 className="page-title">Visão geral</h1>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-mid)', marginTop: '0.25rem' }}>{resumo}</p>
         </div>
         <button className="btn-primary" onClick={() => navigate('/contrato/novo')}>
-          <Plus size={16} /> Novo Contrato
+          <Plus size={16} /> Novo contrato
         </button>
-      </div>
-
-      {/* Cards de alertas */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.75rem', marginBottom: '2rem' }}>
-        <Card title="Total" subtitle="contratos" value={filteredData.length} icon={<FileText size={16} />} />
-        <Card title="Crítico" subtitle="vence em 30 dias" value={countNivel('critico')} icon={<AlertTriangle size={16} />} colorClass="card-danger" />
-        <Card title="Atenção" subtitle="vence em 31–90 dias" value={countNivel('atencao')} icon={<ShieldAlert size={16} />} colorClass="card-warning" />
-        <Card title="Planejamento" subtitle="vence em 91–180 dias" value={countNivel('planejamento')} icon={<CalendarClock size={16} />} colorClass="card-warning" />
-        <Card title="Em dia" subtitle="mais de 180 dias" value={countNivel('ok')} icon={<CheckCircle size={16} />} colorClass="card-success" />
-        <Card title="Vencidos" subtitle="prazo expirado" value={countNivel('vencido')} icon={<Clock size={16} />} colorClass="card-danger" />
       </div>
 
       {/* Filtros */}
@@ -195,36 +147,45 @@ export const Dashboard: React.FC = () => {
           </select>
         </div>
 
-        <div style={{ minWidth: '160px' }}>
-          <select
-            className="form-input"
-            value={nivelFilter}
-            onChange={e => setNivelFilter(e.target.value)}
-          >
-            <option value="todos">Todos os Níveis</option>
-            <option value="critico">Crítico</option>
-            <option value="atencao">Atenção</option>
-            <option value="planejamento">Planejamento</option>
-            <option value="ok">OK</option>
-            <option value="vencido">Vencido</option>
-            <option value="renovado">Renovado</option>
-          </select>
-        </div>
       </div>
 
-      <p style={{ marginBottom: '0.75rem', fontSize: '0.8125rem', color: 'var(--text-tertiary)' }}>
-        {filteredData.length === contratos.length
-          ? `${contratos.length} contratos`
-          : `${filteredData.length} de ${contratos.length} contratos`}
-      </p>
+      {/* Legenda: também filtra por nível */}
+      <div className="legenda-niveis" role="group" aria-label="Filtrar por nível de alerta">
+        <button
+          className="legenda-nivel"
+          aria-pressed={nivelFilter === 'todos'}
+          onClick={() => setNivelFilter('todos')}
+        >
+          Todos <span>{baseFiltrada.length}</span>
+        </button>
+        {NIVEIS_NA_LEGENDA.filter(n => n !== 'renovado' || countNivel(n) > 0).map(n => (
+          <button
+            key={n}
+            className="legenda-nivel"
+            aria-pressed={nivelFilter === n}
+            onClick={() => setNivelFilter(nivelFilter === n ? 'todos' : n)}
+          >
+            <i className={`legenda-amostra barra-${n}`} />
+            {NIVEL_ALERTA_CONFIG[n].label} <span>{countNivel(n)}</span>
+          </button>
+        ))}
+      </div>
 
-      <Table
-        data={filteredData}
-        columns={columns}
-        keyExtractor={c => c.id}
-        onRowClick={c => navigate(`/contrato/${c.id}`)}
-        emptyMessage="Nenhum contrato encontrado."
-      />
+      {filteredData.length > 0 ? (
+        <ReguaVencimentos contratos={filteredData} />
+      ) : contratos.length > 0 ? (
+        <div className="estado-vazio">
+          <p>Nenhum contrato com esses filtros.</p>
+          <button className="btn-secondary" onClick={limparFiltros}>Limpar filtros</button>
+        </div>
+      ) : (
+        <div className="estado-vazio">
+          <p>Nenhum contrato cadastrado ainda.</p>
+          <button className="btn-primary" onClick={() => navigate('/contrato/novo')}>
+            <Plus size={16} /> Novo contrato
+          </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -82,54 +82,61 @@ export const NIVEL_ALERTA_CONFIG: Record<NivelAlerta, {
   cssClass: string;
   descricao: string;
   acao: string;
+  acaoCurta: string;
 }> = {
   critico: {
     label: 'Crítico',
-    cor: '#ef4444',
-    corBg: 'rgba(239,68,68,0.1)',
+    cor: '#c4281c',
+    corBg: 'rgba(196,40,28,0.09)',
     cssClass: 'badge-alerta-critico',
     descricao: 'Vence em até 30 dias',
     acao: 'Emitir termo aditivo (art. 106 da Lei 14.133/2021)',
+    acaoCurta: 'Emitir termo aditivo',
   },
   atencao: {
     label: 'Atenção',
-    cor: '#f59e0b',
-    corBg: 'rgba(245,158,11,0.1)',
+    cor: '#9a5b00',
+    corBg: 'rgba(154,91,0,0.1)',
     cssClass: 'badge-alerta-atencao',
     descricao: 'Vence entre 31 e 90 dias',
     acao: 'Publicar novo edital no PNCP e iniciar licitação',
+    acaoCurta: 'Publicar novo edital',
   },
   planejamento: {
     label: 'Planejamento',
-    cor: '#f59e0b',
-    corBg: 'rgba(245,158,11,0.08)',
+    cor: '#1f5fd6',
+    corBg: 'rgba(31,95,214,0.09)',
     cssClass: 'badge-alerta-planejamento',
     descricao: 'Vence entre 91 e 180 dias',
     acao: 'Iniciar planejamento do novo processo licitatório',
+    acaoCurta: 'Iniciar planejamento',
   },
   ok: {
     label: 'Em dia',
-    cor: '#22c55e',
-    corBg: 'rgba(34,197,94,0.1)',
+    cor: '#1e7148',
+    corBg: 'rgba(30,113,72,0.09)',
     cssClass: 'badge-alerta-ok',
     descricao: 'Vence em mais de 180 dias',
     acao: 'Nenhuma ação imediata necessária',
+    acaoCurta: 'Nenhuma ação agora',
   },
   vencido: {
     label: 'Vencido',
-    cor: '#ef4444',
-    corBg: 'rgba(239,68,68,0.1)',
+    cor: '#c4281c',
+    corBg: 'rgba(196,40,28,0.09)',
     cssClass: 'badge-alerta-vencido',
     descricao: 'Contrato vencido',
     acao: 'Regularizar imediatamente — possível irregularidade contratual',
+    acaoCurta: 'Regularizar agora',
   },
   renovado: {
     label: 'Renovado',
-    cor: '#a855f7',
-    corBg: 'rgba(168,85,247,0.1)',
+    cor: '#6b4fbb',
+    corBg: 'rgba(107,79,187,0.09)',
     cssClass: 'badge-alerta-renovado',
     descricao: 'Contrato renovado',
     acao: 'Verificar vigência do aditivo',
+    acaoCurta: 'Verificar vigência',
   },
 };
 

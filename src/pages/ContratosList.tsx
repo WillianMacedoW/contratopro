@@ -288,7 +288,7 @@ export const ContratosList: React.FC = () => {
                       </td>
                       <td>
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
-                          {new Date(c.data_vencimento).toLocaleDateString('pt-BR')}
+                          {new Date(c.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}
                         </span>
                       </td>
                       <td><Badge status={c.status} /></td>

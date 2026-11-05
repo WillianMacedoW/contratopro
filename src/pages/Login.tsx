@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, FileText, CheckCircle2, AlertTriangle, Play } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertTriangle, Play } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { verificarConexaoSupabase } from '../lib/supabase';
+import { Logo } from '../components/Logo';
 
 export const Login: React.FC = () => {
   const { signIn } = useAuth();
@@ -76,21 +77,14 @@ export const Login: React.FC = () => {
         flexShrink: 0,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-          <div style={{
-            width: '32px', height: '32px',
-            background: 'var(--accent)',
-            borderRadius: '6px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <FileText size={16} color="#fff" />
-          </div>
-          <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '0.9375rem', color: 'var(--text-high)' }}>
+          <Logo />
+          <span style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-high)' }}>
             ContratoPro
           </span>
         </div>
 
         <div>
-          <p style={{ fontSize: '1.5rem', fontFamily: 'Outfit, sans-serif', fontWeight: 700, color: 'var(--text-high)', lineHeight: 1.4, marginBottom: '1rem' }}>
+          <p style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-high)', lineHeight: 1.4, marginBottom: '1rem' }}>
             Gestão inteligente de contratos públicos
           </p>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-mid)', lineHeight: 1.65 }}>
@@ -149,7 +143,6 @@ export const Login: React.FC = () => {
           </div>
 
           <h1 style={{
-            fontFamily: 'Outfit, sans-serif',
             fontSize: '1.5rem',
             fontWeight: 800,
             color: 'var(--text-high)',
@@ -240,18 +233,18 @@ export const Login: React.FC = () => {
               fontSize: '0.9375rem',
               borderRadius: 'var(--radius-md)',
               border: '1px dashed var(--accent-border)',
-              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(99, 102, 241, 0.08))',
+              background: 'var(--accent-dim)',
               color: 'var(--accent)',
               cursor: 'pointer',
               fontWeight: 600,
               transition: 'all 0.2s ease',
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.15))';
+              e.currentTarget.style.background = 'rgba(31, 95, 214, 0.16)';
               e.currentTarget.style.borderStyle = 'solid';
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(99, 102, 241, 0.08))';
+              e.currentTarget.style.background = 'var(--accent-dim)';
               e.currentTarget.style.borderStyle = 'dashed';
             }}
           >

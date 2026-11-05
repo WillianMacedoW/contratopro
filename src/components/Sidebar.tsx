@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, FileText, Search, ShieldCheck, LogOut, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { Logo } from './Logo';
 import './Sidebar.css';
 
 export const Sidebar: React.FC = () => {
@@ -14,7 +15,7 @@ export const Sidebar: React.FC = () => {
   };
 
   const menuItems = [
-    { path: '/',             icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
+    { path: '/',             icon: <LayoutDashboard size={18} />, label: 'Visão geral' },
     { path: '/contratos',    icon: <FileText size={18} />,        label: 'Contratos' },
     { path: '/conformidade', icon: <ShieldCheck size={18} />,     label: 'Conformidade' },
     { path: '/importar',     icon: <Search size={18} />,          label: 'Importar PNCP' },
@@ -24,7 +25,7 @@ export const Sidebar: React.FC = () => {
     <aside className="sidebar">
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <div className="logo-icon"><FileText size={15} /></div>
+          <Logo />
           <div>
             <span className="logo-text">ContratoPro</span>
             <p className="logo-sub">Gestão Pública</p>
@@ -33,7 +34,6 @@ export const Sidebar: React.FC = () => {
       </div>
 
       <nav className="sidebar-nav">
-        <p className="nav-section-label">Menu</p>
         <ul className="nav-list">
           {menuItems.map((item) => (
             <li key={item.path} className="nav-item">
@@ -64,7 +64,7 @@ export const Sidebar: React.FC = () => {
             </div>
           </div>
         )}
-        <button className="nav-link logout-btn" onClick={handleLogout}>
+        <button className="nav-link logout-btn" onClick={handleLogout} aria-label="Sair">
           <span className="nav-icon"><LogOut size={18} /></span>
           <span>Sair</span>
         </button>

@@ -21,7 +21,7 @@
 /* Nível de alerta */
 .badge-alerta-critico     { background-color: var(--red-dim);    color: var(--red);    border-color: var(--red-border);    }
 .badge-alerta-atencao     { background-color: var(--amber-dim);  color: var(--amber);  border-color: var(--amber-border);  }
-.badge-alerta-planejamento{ background-color: var(--amber-dim);  color: var(--amber);  border-color: var(--amber-border);  opacity: 0.8; }
+.badge-alerta-planejamento{ background-color: var(--accent-dim); color: var(--accent); border-color: var(--accent-border); }
 .badge-alerta-ok          { background-color: var(--green-dim);  color: var(--green);  border-color: var(--green-border);  }
 .badge-alerta-vencido     { background-color: var(--red-dim);    color: var(--red);    border-color: var(--red-border);    }
 .badge-alerta-renovado    { background-color: var(--purple-dim); color: var(--purple); border-color: var(--purple-border); }
