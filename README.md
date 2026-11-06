@@ -2,6 +2,8 @@
 
 Sistema web para acompanhar contratos públicos municipais. Importa contratos do PNCP, mostra o que vence em breve e confere prazos e limites da Lei 14.133/2021.
 
+**Acesse:** https://contratopro-xi.vercel.app (clique em **Entrar no Modo Demonstração (Local)**)
+
 ![Visão geral do ContratoPro](docs/dashboard.png)
 
 *Tela do modo demonstração, com dados fictícios.*
