@@ -126,7 +126,7 @@ export const NIVEL_ALERTA_CONFIG: Record<NivelAlerta, {
     corBg: 'rgba(196,40,28,0.09)',
     cssClass: 'badge-alerta-vencido',
     descricao: 'Contrato vencido',
-    acao: 'Regularizar imediatamente — possível irregularidade contratual',
+    acao: 'Regularizar imediatamente, possível irregularidade contratual',
     acaoCurta: 'Regularizar agora',
   },
   renovado: {
@@ -148,3 +148,32 @@ export const formatarCNPJ = (cnpj: string): string => {
   if (digits.length !== 14) return cnpj;
   return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
 };
+
+const CONECTIVOS = /(?<=\s)(De|Da|Do|Das|Dos|E)(?=\s)/g;
+
+/** Nomes do PNCP chegam em caixa alta: "CONSTRUTORA HORIZONTE SA" vira "Construtora Horizonte SA". */
+export const titleCase = (str: string): string =>
+  str
+    .toLowerCase()
+    .replace(/(^|[^\p{L}\p{N}])(\p{L})/gu, (_, sep, l) => sep + l.toUpperCase())
+    .replace(CONECTIVOS, c => c.toLowerCase())
+    .replace(/\bS\.?a\.?$/, 'SA');
+
+export const nomeSecretaria = (nome?: string | null): string =>
+  nome
+    ? titleCase(nome).replace(/^Secretaria(\s+Municipal)?(\s+(de|da|do))?\s+/, '')
+    : 'Sem secretaria';
+
+/** Prazo curto, para as barras da régua. */
+export const prazoEmTexto = (dias: number, nivel: NivelAlerta): string => {
+  if (nivel === 'renovado') return 'Renovado';
+  if (dias < 0) return `Venceu há ${Math.abs(dias)} ${dias === -1 ? 'dia' : 'dias'}`;
+  if (dias === 0) return 'Vence hoje';
+  return `${dias} ${dias === 1 ? 'dia' : 'dias'}`;
+};
+
+/** Prazo em frase, para quem está olhando um contrato só. */
+export const prazoPorExtenso = (dias: number, nivel: NivelAlerta): string =>
+  nivel !== 'renovado' && dias > 0
+    ? `${dias === 1 ? 'Falta' : 'Faltam'} ${prazoEmTexto(dias, nivel)}`
+    : prazoEmTexto(dias, nivel);

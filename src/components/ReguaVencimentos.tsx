@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { addDays, addMonths, differenceInDays, format, getDaysInMonth, startOfDay, startOfMonth, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { NIVEL_ALERTA_CONFIG, formatarMoeda, parseDataLocal } from '../utils/statusUtils';
+import { NIVEL_ALERTA_CONFIG, formatarMoeda, nomeSecretaria, parseDataLocal, prazoEmTexto, titleCase } from '../utils/statusUtils';
 import type { NivelAlerta } from '../utils/statusUtils';
 import './ReguaVencimentos.css';
 
@@ -24,22 +24,7 @@ const LIMITE_ETIQUETA_FORA = 74;
 
 const ORDEM_URGENCIA: NivelAlerta[] = ['vencido', 'critico', 'atencao', 'planejamento', 'ok', 'renovado'];
 
-const titleCase = (str: string) =>
-  str.toLowerCase().replace(/(^|[^\p{L}\p{N}])(\p{L})/gu, (_, sep, l) => sep + l.toUpperCase());
-
-const nomeSecretaria = (nome?: string) =>
-  nome
-    ? titleCase(nome).replace(/^Secretaria(\s+Municipal)?(\s+(De|Da|Do))?\s+/, '')
-    : 'Sem secretaria';
-
 const contagem = (n: number) => `${n} ${n === 1 ? 'contrato' : 'contratos'}`;
-
-const prazoEmTexto = (dias: number, nivel: NivelAlerta) => {
-  if (nivel === 'renovado') return 'Renovado';
-  if (dias < 0) return `Venceu há ${Math.abs(dias)} ${dias === -1 ? 'dia' : 'dias'}`;
-  if (dias === 0) return 'Vence hoje';
-  return `${dias} ${dias === 1 ? 'dia' : 'dias'}`;
-};
 
 export const ReguaVencimentos: React.FC<{ contratos: ContratoRegua[] }> = ({ contratos }) => {
   const hoje = startOfDay(new Date());

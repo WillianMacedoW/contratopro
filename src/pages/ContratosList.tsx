@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Database, Trash2, Eye } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search, Filter, Database, Trash2, Plus } from 'lucide-react';
 import { Badge } from '../components/Badge';
 import { supabase } from '../lib/supabase';
 import '../components/Table.css';
-import { calcularStatus, formatarMoeda } from '../utils/statusUtils';
+import { calcularStatus, formatarMoeda, nomeSecretaria, titleCase } from '../utils/statusUtils';
 import type { ContratoStatus } from '../utils/statusUtils';
 
 interface Contrato {
@@ -137,29 +137,23 @@ export const ContratosList: React.FC = () => {
     }
   };
 
-  const titleCase = (str: string) =>
-    str.toLowerCase().replace(/(^|[^\p{L}\p{N}])(\p{L})/gu, (_, sep, l) => sep + l.toUpperCase());
-
-  const truncate = (str: string, max = 38) =>
-    str.length > max ? str.slice(0, max) + '…' : str;
-
   return (
     <div className="fade-in">
       <div className="page-header">
-        <h1 className="page-title">Todos os Contratos</h1>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <h1 className="page-title">Contratos</h1>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button className="btn-secondary" onClick={() => navigate('/importar')}>
-            <Database size={18} />
+            <Database size={16} />
             Importar do PNCP
           </button>
           <button className="btn-primary" onClick={() => navigate('/contrato/novo')}>
-            + Novo Contrato
+            <Plus size={16} /> Novo contrato
           </button>
         </div>
       </div>
 
       {/* Filtros */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
         <div style={{ flex: 2, minWidth: '220px', position: 'relative' }}>
           <Search size={16} style={{ position: 'absolute', top: '50%', left: '0.75rem', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
           <input
@@ -179,8 +173,8 @@ export const ContratosList: React.FC = () => {
             value={secretariaFilter}
             onChange={(e) => setSecretariaFilter(e.target.value)}
           >
-            <option value="todas">Todas as Secretarias</option>
-            <option value="sem_secretaria">Sem Secretaria</option>
+            <option value="todas">Todas as secretarias</option>
+            <option value="sem_secretaria">Sem secretaria</option>
             {secretariasDisponiveis.map(s => (
               <option key={s.id} value={s.id}>{s.nome}</option>
             ))}
@@ -194,7 +188,7 @@ export const ContratosList: React.FC = () => {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
-            <option value="todos">Todos os Status</option>
+            <option value="todos">Todos os status</option>
             <option value="ativo">Ativo</option>
             <option value="vencendo">Vencendo</option>
             <option value="vencido">Vencido</option>
@@ -234,7 +228,7 @@ export const ContratosList: React.FC = () => {
                 disabled={deletando}
               >
                 <Trash2 size={16} />
-                {deletando ? 'Excluindo...' : `Excluir ${selectedIds.size} selecionado(s)`}
+                {deletando ? 'Excluindo...' : `Excluir ${selectedIds.size} ${selectedIds.size === 1 ? 'selecionado' : 'selecionados'}`}
               </button>
             )}
           </div>
@@ -245,26 +239,26 @@ export const ContratosList: React.FC = () => {
               <thead>
                 <tr>
                   <th style={{ width: '40px' }}></th>
-                  <th>Nº Contrato</th>
+                  <th>Contrato</th>
                   <th>Fornecedor</th>
                   <th>Secretaria</th>
                   <th>Valor</th>
                   <th>Vencimento</th>
                   <th>Status</th>
-                  <th style={{ width: '48px' }}></th>
                 </tr>
               </thead>
               <tbody>
                 {filteredData.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="table-empty">Nenhum contrato encontrado.</td>
+                    <td colSpan={7} className="table-empty">Nenhum contrato encontrado.</td>
                   </tr>
                 ) : (
                   filteredData.map(c => (
-                    <tr key={c.id}>
-                      <td>
+                    <tr key={c.id} className="clickable-row" onClick={() => navigate(`/contrato/${c.id}`)}>
+                      <td onClick={e => e.stopPropagation()}>
                         <input
                           type="checkbox"
+                          aria-label={`Selecionar contrato ${c.numero_contrato}`}
                           checked={selectedIds.has(c.id)}
                           onChange={() => toggleSelect(c.id)}
                           style={{ cursor: 'pointer', width: '16px', height: '16px' }}
@@ -275,10 +269,10 @@ export const ContratosList: React.FC = () => {
                           {c.numero_contrato}
                         </span>
                       </td>
-                      <td style={{ fontWeight: 500 }}>{titleCase(c.fornecedor)}</td>
+                      <td><Link className="link-linha" to={`/contrato/${c.id}`} onClick={e => e.stopPropagation()}>{titleCase(c.fornecedor)}</Link></td>
                       <td>
                         {c.secretarias?.nome
-                          ? <span style={{ color: 'var(--text-mid)', fontSize: '0.8125rem' }} title={c.secretarias.nome}>{truncate(titleCase(c.secretarias.nome))}</span>
+                          ? <span style={{ color: 'var(--text-mid)', fontSize: '0.8125rem' }} title={c.secretarias.nome}>{nomeSecretaria(c.secretarias.nome)}</span>
                           : <span style={{ color: 'var(--text-low)' }}>—</span>}
                       </td>
                       <td>
@@ -292,16 +286,6 @@ export const ContratosList: React.FC = () => {
                         </span>
                       </td>
                       <td><Badge status={c.status} /></td>
-                      <td>
-                        <button
-                          className="btn-secondary"
-                          style={{ padding: '0.25rem 0.5rem' }}
-                          onClick={() => navigate(`/contrato/${c.id}`)}
-                          title="Ver contrato"
-                        >
-                          <Eye size={15} />
-                        </button>
-                      </td>
                     </tr>
                   ))
                 )}

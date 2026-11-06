@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, AlertTriangle, CalendarClock, TrendingUp } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { calcularNivelAlerta, formatarMoeda } from '../utils/statusUtils';
+import { calcularNivelAlerta, formatarMoeda, nomeSecretaria, titleCase } from '../utils/statusUtils';
 import type { NivelAlerta } from '../utils/statusUtils';
 import '../components/Table.css';
 import '../components/Badge.css';
@@ -89,9 +89,6 @@ export const Conformidade: React.FC = () => {
   const [dataInicioAte, setDataInicioAte] = useState('');
   const [filtroAberto, setFiltroAberto] = useState<string | null>(null);
 
-  const titleCase = (str: string) =>
-    str.toLowerCase().replace(/(^|[^\p{L}\p{N}])(\p{L})/gu, (_, sep, l) => sep + l.toUpperCase());
-
   const truncate = (str: string, max = 38) =>
     str.length > max ? str.slice(0, max) + '…' : str;
 
@@ -166,22 +163,21 @@ export const Conformidade: React.FC = () => {
   return (
     <div className="fade-in">
       <div className="page-header">
-        <h1 className="page-title">Painel de Conformidade Legal</h1>
-        <span style={{ fontSize: '0.8125rem', color: 'var(--text-mid)', fontFamily: 'var(--font-mono)' }}>Lei 14.133/2021</span>
+        <div>
+          <h1 className="page-title">Conformidade</h1>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-mid)', marginTop: '0.25rem' }}>Exigências da Lei 14.133/2021</p>
+        </div>
       </div>
 
       {filtroAberto && <div style={{ position: 'fixed', inset: 0, zIndex: 9 }} onClick={() => setFiltroAberto(null)} />}
 
       {/* ── SEÇÃO A: Publicação PNCP ─────────────────────────────────────── */}
-      <div className="section-card" style={{ marginBottom: '1.5rem' }}>
-        <h2 className="section-title">
-          <ShieldCheck size={18} style={{ color: 'var(--accent)' }} />
-          A) Publicação no PNCP
-          <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-sans)', fontWeight: 400, color: 'var(--text-low)', marginLeft: '0.25rem' }}>art. 94 — prazo: 20 dias úteis</span>
-        </h2>
+      <section className="secao">
+        <h2 className="secao-titulo">Publicação no PNCP</h2>
+        <p className="secao-sub">Art. 94, prazo de 20 dias úteis.</p>
 
         {pendenciasPNCP.length === 0 ? (
-          <p style={{ color: 'var(--text-mid)', fontSize: '0.875rem' }}>
+          <p className="secao-vazia">
             Todos os contratos com data de início registrada já possuem data de publicação no PNCP.
           </p>
         ) : (
@@ -190,12 +186,14 @@ export const Conformidade: React.FC = () => {
               <thead>
                 <tr>
                   <th style={{ position: 'relative' }}>
-                    <span
-                      style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', userSelect: 'none' }}
+                    <button
+                      type="button"
+                      className="th-filtro"
+                      aria-expanded={filtroAberto === 'numero'}
                       onClick={e => { e.stopPropagation(); setFiltroAberto(f => f === 'numero' ? null : 'numero'); }}
                     >
                       Contrato {numeroBusca && <span style={{ color: 'var(--accent)', fontSize: '0.65rem' }}>●</span>} ▾
-                    </span>
+                    </button>
                     {filtroAberto === 'numero' && (
                       <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 10, background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '0.5rem', boxShadow: 'var(--shadow-md)', minWidth: '180px' }} onClick={e => e.stopPropagation()}>
                         <input autoFocus className="form-input" style={{ height: '32px', fontSize: '0.8rem' }} placeholder="Buscar número..." value={numeroBusca} onChange={e => setNumeroBusca(e.target.value)} />
@@ -204,12 +202,14 @@ export const Conformidade: React.FC = () => {
                     )}
                   </th>
                   <th style={{ position: 'relative' }}>
-                    <span
-                      style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', userSelect: 'none' }}
+                    <button
+                      type="button"
+                      className="th-filtro"
+                      aria-expanded={filtroAberto === 'fornecedor'}
                       onClick={e => { e.stopPropagation(); setFiltroAberto(f => f === 'fornecedor' ? null : 'fornecedor'); }}
                     >
                       Fornecedor {fornecedorFiltro && <span style={{ color: 'var(--accent)', fontSize: '0.65rem' }}>●</span>} ▾
-                    </span>
+                    </button>
                     {filtroAberto === 'fornecedor' && (
                       <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 10, background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-md)', maxHeight: '240px', overflowY: 'auto', minWidth: '260px' }} onClick={e => e.stopPropagation()}>
                         <div style={{ padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.82rem', color: !fornecedorFiltro ? 'var(--accent)' : 'var(--text-mid)', fontWeight: !fornecedorFiltro ? 600 : 400 }} onClick={() => { setFornecedorFiltro(''); setFiltroAberto(null); }}>Todos</div>
@@ -222,12 +222,14 @@ export const Conformidade: React.FC = () => {
                     )}
                   </th>
                   <th style={{ position: 'relative' }}>
-                    <span
-                      style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', userSelect: 'none' }}
+                    <button
+                      type="button"
+                      className="th-filtro"
+                      aria-expanded={filtroAberto === 'data'}
                       onClick={e => { e.stopPropagation(); setFiltroAberto(f => f === 'data' ? null : 'data'); }}
                     >
-                      Data Início {(dataInicioDe || dataInicioAte) && <span style={{ color: 'var(--accent)', fontSize: '0.65rem' }}>●</span>} ▾
-                    </span>
+                      Início {(dataInicioDe || dataInicioAte) && <span style={{ color: 'var(--accent)', fontSize: '0.65rem' }}>●</span>} ▾
+                    </button>
                     {filtroAberto === 'data' && (
                       <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 10, background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '0.75rem', boxShadow: 'var(--shadow-md)', minWidth: '260px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }} onClick={e => e.stopPropagation()}>
                         <label style={{ fontSize: '0.75rem', color: 'var(--text-mid)' }}>De</label>
@@ -238,8 +240,8 @@ export const Conformidade: React.FC = () => {
                       </div>
                     )}
                   </th>
-                  <th>Prazo Limite</th>
-                  <th>Dias úteis s/ publicar</th>
+                  <th>Prazo limite</th>
+                  <th>Dias úteis sem publicar</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -247,7 +249,7 @@ export const Conformidade: React.FC = () => {
                 {pendenciasPNCP.map(({ contrato: c, diasUteisSemPublicar, prazoFinal, atrasado }) => (
                   <tr key={c.id} className="clickable-row" onClick={() => navigate(`/contrato/${c.id}`)}>
                     <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', color: 'var(--text-mid)' }}>{c.numero_contrato}</td>
-                    <td style={{ fontWeight: 500 }}>{truncate(titleCase(c.fornecedor))}</td>
+                    <td><Link className="link-linha" to={`/contrato/${c.id}`} onClick={e => e.stopPropagation()}>{titleCase(c.fornecedor)}</Link></td>
                     <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem' }}>{new Date(c.data_inicio + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
                     <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem' }}>{prazoFinal.toLocaleDateString('pt-BR')}</td>
                     <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: atrasado ? 'var(--red)' : 'var(--amber)' }}>
@@ -265,29 +267,24 @@ export const Conformidade: React.FC = () => {
             </table>
           </div>
         )}
-      </div>
+      </section>
 
       {/* ── SEÇÃO B: Limite de Dispensa ──────────────────────────────────── */}
-      <div className="section-card" style={{ marginBottom: '1.5rem' }}>
-        <h2 className="section-title">
-          <TrendingUp size={18} style={{ color: 'var(--accent)' }} />
-          B) Limite de Dispensa de Licitação (art. 75)
-          <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-sans)', fontWeight: 400, color: 'var(--text-low)', marginLeft: '0.25rem' }}>Exercício {anoAtual}</span>
-        </h2>
-        <p style={{ fontSize: '0.8125rem', color: 'var(--text-mid)', marginBottom: '1.25rem', lineHeight: 1.6 }}>
-          Limite anual por unidade gestora e objeto de mesma natureza:
-          obras R$&nbsp;100.000 · serviços/compras R$&nbsp;50.000.
-          Resets em 01/01 a cada exercício.
+      <section className="secao">
+        <h2 className="secao-titulo">Limite de dispensa de licitação</h2>
+        <p className="secao-sub">
+          Art. 75, exercício {anoAtual}. Limite anual por unidade gestora e objeto de mesma natureza:
+          R$&nbsp;100.000 para obras e R$&nbsp;50.000 para serviços e compras. Reinicia em 1º de janeiro.
         </p>
 
         {linhasDispensa.length === 0 ? (
-          <p style={{ color: 'var(--text-mid)', fontSize: '0.875rem' }}>Nenhum contrato com data de início em {anoAtual}.</p>
+          <p className="secao-vazia">Nenhum contrato com data de início em {anoAtual}.</p>
         ) : (
           <div className="table-container">
             <table className="app-table">
               <thead>
                 <tr>
-                  {['Secretaria', 'Tipo de Objeto', 'Total Contratado no Ano', 'Limite Legal', 'Saldo Disponível', 'Consumo / Alerta'].map(h => (
+                  {['Secretaria', 'Tipo de objeto', 'Contratado no ano', 'Limite legal', 'Saldo', 'Consumo'].map(h => (
                     <th key={h}>{h}</th>
                   ))}
                 </tr>
@@ -305,7 +302,7 @@ export const Conformidade: React.FC = () => {
 
                   return (
                     <tr key={i}>
-                      <td style={{ fontWeight: 500 }}>{truncate(titleCase(row.secretariaNome), 32)}</td>
+                      <td style={{ fontWeight: 500 }}>{nomeSecretaria(row.secretariaNome)}</td>
                       <td style={{ color: 'var(--text-mid)', fontSize: '0.8125rem' }}>{labelTipo(row.tipoObjeto)}</td>
                       <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', fontWeight: 600 }}>{formatarMoeda(row.totalAno)}</td>
                       <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', color: 'var(--text-mid)' }}>{formatarMoeda(row.limite)}</td>
@@ -318,7 +315,7 @@ export const Conformidade: React.FC = () => {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontSize: '0.6875rem', color: 'var(--text-low)', fontFamily: 'var(--font-mono)' }}>{percReal.toFixed(1)}%</span>
-                          <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: alertaColor, backgroundColor: alertaDim, border: `1px solid ${alertaBorder}`, padding: '0.125rem 0.375rem', borderRadius: '4px', letterSpacing: '0.02em' }}>{alertaLabel}</span>
+                          <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: alertaColor, backgroundColor: alertaDim, border: `1px solid ${alertaBorder}`, padding: '0.125rem 0.375rem', borderRadius: '4px',  }}>{alertaLabel}</span>
                         </div>
                       </td>
                     </tr>
@@ -328,20 +325,17 @@ export const Conformidade: React.FC = () => {
             </table>
           </div>
         )}
-      </div>
+      </section>
 
       {/* ── SEÇÃO C: Calendário de Licitações ────────────────────────────── */}
-      <div className="section-card">
-        <h2 className="section-title">
-          <CalendarClock size={18} style={{ color: 'var(--accent)' }} />
-          C) Calendário de Licitações — Contratos em Alerta
-        </h2>
-        <p style={{ fontSize: '0.8125rem', color: 'var(--text-mid)', marginBottom: '1.25rem', lineHeight: 1.6 }}>
-          Contratos em nível PLANEJAMENTO ou ATENÇÃO. Data recomendada para início = vencimento − 180 dias.
+      <section className="secao">
+        <h2 className="secao-titulo">Calendário de licitações</h2>
+        <p className="secao-sub">
+          Contratos em atenção ou planejamento. A licitação deve começar até 180 dias antes do vencimento.
         </p>
 
         {calendarioLicitacoes.length === 0 ? (
-          <p style={{ color: 'var(--text-mid)', fontSize: '0.875rem' }}>
+          <p className="secao-vazia">
             Nenhum contrato requer planejamento licitatório imediato.
           </p>
         ) : (
@@ -349,7 +343,7 @@ export const Conformidade: React.FC = () => {
             <table className="app-table">
               <thead>
                 <tr>
-                  {['Contrato', 'Fornecedor', 'Secretaria', 'Vencimento', 'Iniciar Licitação até', 'Dias Restantes', 'Nível'].map(h => (
+                  {['Contrato', 'Fornecedor', 'Secretaria', 'Vencimento', 'Iniciar licitação até', 'Dias restantes', 'Nível'].map(h => (
                     <th key={h}>{h}</th>
                   ))}
                 </tr>
@@ -360,15 +354,15 @@ export const Conformidade: React.FC = () => {
                   return (
                     <tr key={c.id} className="clickable-row" onClick={() => navigate(`/contrato/${c.id}`)}>
                       <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', color: 'var(--text-mid)' }}>{c.numero_contrato}</td>
-                      <td style={{ fontWeight: 500 }}>{truncate(titleCase(c.fornecedor))}</td>
-                      <td style={{ color: 'var(--text-mid)', fontSize: '0.8125rem' }}>{c.secretarias?.nome ? truncate(titleCase(c.secretarias.nome)) : '—'}</td>
+                      <td><Link className="link-linha" to={`/contrato/${c.id}`} onClick={e => e.stopPropagation()}>{titleCase(c.fornecedor)}</Link></td>
+                      <td style={{ color: 'var(--text-mid)', fontSize: '0.8125rem' }}>{nomeSecretaria(c.secretarias?.nome)}</td>
                       <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem' }}>{new Date(c.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
                       <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', fontWeight: 600, color: dataRecAtrasada ? 'var(--red)' : 'var(--text-high)' }}>
                         {dataRecomendada.toLocaleDateString('pt-BR')}
                         {dataRecAtrasada && <AlertTriangle size={12} style={{ display: 'inline', marginLeft: '0.25rem', color: 'var(--red)', verticalAlign: 'middle' }} />}
                       </td>
                       <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', fontWeight: 600, color: diasRestantes <= 90 ? 'var(--amber)' : 'var(--text-high)' }}>
-                        {diasRestantes}d
+                        {diasRestantes} dias
                       </td>
                       <td>
                         <span className={`badge ${nivelAlerta === 'atencao' ? 'badge-vencendo' : 'badge-alerta-planejamento'}`}>
@@ -382,7 +376,7 @@ export const Conformidade: React.FC = () => {
             </table>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 };

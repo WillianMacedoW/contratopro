@@ -299,6 +299,71 @@ input[type="checkbox"] { accent-color: var(--accent); }
 
 .filter-group .form-input { padding-left: 2rem; }
 
+/* ─── Cor por nível de alerta ─────────────── */
+.nivel-vencido, .nivel-critico { color: var(--red); }
+.nivel-atencao      { color: var(--amber); }
+.nivel-planejamento { color: var(--accent); }
+.nivel-ok           { color: var(--green); }
+.nivel-renovado     { color: var(--purple); }
+
+.barra-vencido, .barra-critico { background-color: var(--red); }
+.barra-atencao      { background-color: var(--amber); }
+.barra-planejamento { background-color: var(--accent); }
+.barra-ok           { background-color: var(--green); }
+.barra-renovado     { background-color: var(--purple); }
+
+/* ─── Seção de página, sem caixa em volta ──── */
+.secao { margin-bottom: 2.5rem; }
+
+.secao-titulo {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.secao-sub {
+  max-width: 68ch;
+  margin: 0.125rem 0 1rem;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--text-mid);
+}
+
+.secao-vazia { font-size: 0.875rem; color: var(--text-mid); }
+
+/* ─── Lista de campos do contrato ──────────── */
+.dados-contrato {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.25rem 2rem;
+  padding: 1.25rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.25rem;
+}
+
+.dados-contrato dt { font-size: 0.75rem; color: var(--text-mid); }
+.dados-contrato dd { margin-top: 0.125rem; font-size: 0.9375rem; font-weight: 500; }
+.dados-valor { font-size: 1.25rem !important; font-weight: 700 !important; letter-spacing: -0.02em; }
+
+.objeto-contrato { max-width: 72ch; font-size: 0.9375rem; line-height: 1.65; color: var(--text-high); }
+
+/* ─── Consulta de regularidade ─────────────── */
+.consulta { padding: 0.875rem 0; border-top: 1px solid var(--border); }
+.consulta-nome { margin-bottom: 0.25rem; font-size: 0.875rem; font-weight: 600; }
+
+.th-filtro {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.link-linha { color: inherit; font-weight: 500; }
+.link-linha:hover { color: var(--accent); }
+
 /* ─── Legenda de níveis ──────────────────── */
 .legenda-niveis {
   display: flex;

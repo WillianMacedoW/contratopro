@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit, CheckCircle, Trash2, ShieldCheck, ShieldX, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { calcularStatus, calcularNivelAlerta, formatarMoeda, formatarCNPJ, NIVEL_ALERTA_CONFIG } from '../utils/statusUtils';
+import { calcularStatus, calcularNivelAlerta, formatarMoeda, formatarCNPJ, nomeSecretaria, titleCase } from '../utils/statusUtils';
 import type { ContratoStatus } from '../utils/statusUtils';
-import { Badge, BadgeAlerta } from '../components/Badge';
+import { Vigencia } from '../components/Vigencia';
 
 interface Contrato {
   id: string;
@@ -82,6 +82,26 @@ export const ContratoDetail: React.FC = () => {
 
     const resultado: RegularidadeResult = { receitaFederal: null, ceis: null, cnep: null };
 
+    // Os CNPJs da demonstração são de exemplo e podem existir de verdade: nada sai para a internet aqui.
+    if (localStorage.getItem('cp_use_mock') === 'true') {
+      resultado.receitaFederal = {
+        razaoSocial: titleCase(contrato!.fornecedor),
+        situacao: 'Ativa, exemplo do modo demonstração',
+        dataAbertura: '—',
+      };
+      resultado.ceis = { total: 0, sancoesAtivas: [] };
+      resultado.cnep = { total: 0, punicoesAtivas: [] };
+      const verificadoEm = new Date().toISOString();
+      await supabase.from('contratos').update({
+        fornecedor_situacao: 'APTO',
+        fornecedor_verificado_em: verificadoEm,
+      }).eq('id', contrato!.id);
+      setContrato(c => c ? { ...c, fornecedor_situacao: 'APTO', fornecedor_verificado_em: verificadoEm } : c);
+      setRegularidade(resultado);
+      setVerificando(false);
+      return;
+    }
+
     // A) Receita Federal via cnpj.ws — campos estão em d.estabelecimento
     try {
       const res = await fetch(`https://publica.cnpj.ws/cnpj/${cnpj}`);
@@ -105,7 +125,7 @@ export const ContratoDetail: React.FC = () => {
     const semChave = !transparenciaKey?.trim();
 
     try {
-      if (semChave) throw new Error('Chave não configurada — registre em api.portaldatransparencia.gov.br e adicione em VITE_TRANSPARENCIA_API_KEY no .env');
+      if (semChave) throw new Error('Consulta indisponível: falta configurar a chave do Portal da Transparência.');
       const res = await fetch(`https://api.portaldatransparencia.gov.br/api-de-dados/ceis?cnpjSancionado=${cnpj}&pagina=1`, {
         headers: { 'chave-api-dados': transparenciaKey! }
       });
@@ -121,7 +141,7 @@ export const ContratoDetail: React.FC = () => {
     }
 
     try {
-      if (semChave) throw new Error('Chave não configurada — registre em api.portaldatransparencia.gov.br e adicione em VITE_TRANSPARENCIA_API_KEY no .env');
+      if (semChave) throw new Error('Consulta indisponível: falta configurar a chave do Portal da Transparência.');
       const res = await fetch(`https://api.portaldatransparencia.gov.br/api-de-dados/cnep?cnpjSancionado=${cnpj}&pagina=1`, {
         headers: { 'chave-api-dados': transparenciaKey! }
       });
@@ -163,10 +183,6 @@ export const ContratoDetail: React.FC = () => {
   if (!contrato) return null;
 
   const nivel = calcularNivelAlerta(contrato.data_vencimento, contrato.status);
-  const nivelCfg = NIVEL_ALERTA_CONFIG[nivel];
-
-  const titleCase = (str: string) =>
-    str.toLowerCase().replace(/(^|[^\p{L}\p{N}])(\p{L})/gu, (_, sep, l) => sep + l.toUpperCase());
 
   const cnpjExtraido = !contrato.fornecedor_cnpj
     ? (contrato.fornecedor.match(/\((\d{14})\)/) || [])[1] || null
@@ -180,17 +196,17 @@ export const ContratoDetail: React.FC = () => {
       {/* Header */}
       <div className="page-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button className="btn-secondary" onClick={() => navigate(-1)} style={{ padding: '0.5rem 0.625rem' }}>
+          <button className="btn-secondary" onClick={() => navigate(-1)} style={{ padding: '0.5rem 0.625rem' }} aria-label="Voltar">
             <ArrowLeft size={16} />
           </button>
           <div>
-            <h1 className="page-title" style={{ fontSize: '1.5rem' }}>Detalhes do Contrato</h1>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>
-              Nº {contrato.numero_contrato}
+            <h1 className="page-title" style={{ fontSize: '1.5rem' }}>{fornecedorNome}</h1>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-mid)', marginTop: '0.125rem' }}>
+              Contrato {contrato.numero_contrato}
             </p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '0.625rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button className="btn-secondary" onClick={() => navigate(`/contrato/${contrato.id}/editar`)}>
             <Edit size={16} /> Editar
           </button>
@@ -200,111 +216,63 @@ export const ContratoDetail: React.FC = () => {
             onClick={handleMarcarRenovado}
             disabled={contrato.status === 'renovado'}
           >
-            <CheckCircle size={16} /> {contrato.status === 'renovado' ? 'Renovado' : 'Marcar Renovado'}
+            <CheckCircle size={16} /> {contrato.status === 'renovado' ? 'Renovado' : 'Marcar como renovado'}
           </button>
           <button
             className="btn-secondary"
             style={{ color: 'var(--status-vencido-text)', borderColor: 'var(--status-vencido-border)' }}
             onClick={handleDelete}
             title="Excluir contrato"
+            aria-label="Excluir contrato"
           >
             <Trash2 size={16} />
           </button>
         </div>
       </div>
 
-      {/* Card principal — fornecedor + dados */}
-      <div className="section-card" style={{ marginBottom: '1rem' }}>
-        {/* Cabeçalho do card */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '1.25rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)' }}>
-          <div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.25rem' }}>{fornecedorNome}</h2>
-            {cnpjFormatado && (
-              <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                CNPJ: <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{cnpjFormatado}</span>
-              </p>
-            )}
-            {contrato.secretarias && (
-              <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-                Secretaria: <span style={{ color: 'var(--text-primary)' }}>{contrato.secretarias.nome}</span>
-              </p>
-            )}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
-            <Badge status={contrato.status} />
-            <BadgeAlerta nivel={nivel} />
-          </div>
-        </div>
+      {contrato.data_vencimento && (
+        <Vigencia dataInicio={contrato.data_inicio} dataVencimento={contrato.data_vencimento} nivel={nivel} />
+      )}
 
-        {/* Alerta contextual */}
-        {nivel !== 'ok' && nivel !== 'renovado' && (
-          <div className="alert-banner" style={{
-            backgroundColor: `var(--${nivel === 'vencido' || nivel === 'critico' ? 'red' : 'amber'}-dim)`,
-            borderColor: `var(--${nivel === 'vencido' || nivel === 'critico' ? 'red' : 'amber'}-border)`,
-          }}>
-            <AlertCircle size={18} style={{ color: `var(--${nivel === 'vencido' || nivel === 'critico' ? 'red' : 'amber'})`, marginTop: '1px', flexShrink: 0 }} />
-            <div>
-              <p style={{ fontWeight: 600, color: `var(--${nivel === 'vencido' || nivel === 'critico' ? 'red' : 'amber'})`, fontSize: '0.875rem' }}>{nivelCfg.descricao}</p>
-              <p style={{ fontSize: '0.8125rem', color: `var(--${nivel === 'vencido' || nivel === 'critico' ? 'red' : 'amber'})`, opacity: 0.85, marginTop: '0.125rem' }}>{nivelCfg.acao}</p>
-            </div>
+      <dl className="dados-contrato">
+        <div>
+          <dt>Valor total</dt>
+          <dd className="dados-valor">{formatarMoeda(contrato.valor_total)}</dd>
+        </div>
+        <div>
+          <dt>Fiscal responsável</dt>
+          <dd>{contrato.responsavel || 'Não informado'}</dd>
+        </div>
+        {contrato.secretarias && (
+          <div>
+            <dt>Secretaria</dt>
+            <dd>{nomeSecretaria(contrato.secretarias.nome)}</dd>
           </div>
         )}
+        {cnpjFormatado && (
+          <div>
+            <dt>CNPJ</dt>
+            <dd>{cnpjFormatado}</dd>
+          </div>
+        )}
+      </dl>
 
-        {/* Grid de campos */}
-        <div className="info-grid">
-          <div className="info-field">
-            <label>Valor Total</label>
-            <p style={{ fontSize: '1.375rem', fontFamily: 'var(--font-mono)', color: 'var(--accent)', fontWeight: 700, letterSpacing: '-0.02em' }}>{formatarMoeda(contrato.valor_total)}</p>
-          </div>
-          <div className="info-field">
-            <label>Data Início</label>
-            <p className="mono">{contrato.data_inicio ? new Date(contrato.data_inicio + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}</p>
-          </div>
-          <div className="info-field">
-            <label>Data Vencimento</label>
-            <p className="mono" style={{ color: `var(--${nivel === 'vencido' || nivel === 'critico' ? 'red' : nivel === 'ok' ? 'green' : 'amber'})`, fontWeight: 600 }}>
-              {contrato.data_vencimento ? new Date(contrato.data_vencimento + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}
-            </p>
-          </div>
-          <div className="info-field">
-            <label>Responsável / Fiscal</label>
-            <p style={{ color: contrato.responsavel ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
-              {contrato.responsavel || 'Não informado'}
-            </p>
-          </div>
-          <div className="info-field" style={{ gridColumn: '1 / -1' }}>
-            <label>Objeto do Contrato</label>
-            <div style={{
-              backgroundColor: 'var(--bg-base)',
-              border: '1px solid var(--border)',
-              borderLeft: '3px solid var(--accent-border)',
-              padding: '0.875rem 1rem',
-              borderRadius: 'var(--radius-md)',
-              color: 'var(--text-mid)',
-              lineHeight: 1.7,
-              fontSize: '0.875rem',
-              marginTop: '0.375rem',
-            }}>
-              {contrato.objeto || 'Não descrito.'}
-            </div>
-          </div>
-        </div>
-      </div>
+      <section className="secao" aria-labelledby="titulo-objeto">
+        <h2 id="titulo-objeto" className="secao-titulo" style={{ marginBottom: '0.375rem' }}>Objeto do contrato</h2>
+        <p className="objeto-contrato">{contrato.objeto || 'Não descrito.'}</p>
+      </section>
 
       {/* Verificador de Regularidade */}
-      <div className="section-card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem', gap: '1rem', flexWrap: 'wrap' }}>
+      <section className="secao" aria-labelledby="titulo-regularidade">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', gap: '1rem', flexWrap: 'wrap' }}>
           <div>
-            <h3 className="section-title" style={{ marginBottom: '0.25rem' }}>
-              <ShieldCheck size={18} style={{ color: 'var(--accent-primary)' }} />
-              Regularidade do Fornecedor
-            </h3>
+            <h2 id="titulo-regularidade" className="secao-titulo">Regularidade do fornecedor</h2>
             {contrato.fornecedor_verificado_em && (
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-mid)', marginTop: '0.125rem' }}>
                 Última verificação: {new Date(contrato.fornecedor_verificado_em).toLocaleString('pt-BR')}
-                {' — '}
+                {'. '}
                 <span style={{ fontWeight: 600, color: contrato.fornecedor_situacao === 'APTO' ? 'var(--status-ativo-text)' : 'var(--status-vencido-text)' }}>
-                  {contrato.fornecedor_situacao === 'APTO' ? 'Fornecedor Apto' : 'Com Restrições'}
+                  {contrato.fornecedor_situacao === 'APTO' ? 'Fornecedor apto' : 'Com restrições'}
                 </span>
               </p>
             )}
@@ -329,16 +297,16 @@ export const ContratoDetail: React.FC = () => {
           >
             {verificando
               ? <><Loader2 size={15} className="spin" /> Verificando...</>
-              : <><ShieldCheck size={15} /> Verificar Agora</>}
+              : <><ShieldCheck size={15} /> Verificar agora</>}
           </button>
         </div>
 
         {regularidade && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div>
             {/* Receita Federal */}
-            <div style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--bg-tertiary)' }}>
-              <p style={{ fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.625rem', color: 'var(--text-primary)' }}>
-                A) Receita Federal — Situação Cadastral
+            <div className="consulta">
+              <p className="consulta-nome">
+                Receita Federal, situação cadastral
               </p>
               {regularidade.receitaFederal?.erro ? (
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
@@ -359,9 +327,9 @@ export const ContratoDetail: React.FC = () => {
             </div>
 
             {/* CEIS */}
-            <div style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--bg-tertiary)' }}>
-              <p style={{ fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.625rem', color: 'var(--text-primary)' }}>
-                B) CEIS — Empresas Sancionadas (CGU)
+            <div className="consulta">
+              <p className="consulta-nome">
+                CEIS, empresas sancionadas (CGU)
               </p>
               {regularidade.ceis?.erro ? (
                 <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
@@ -372,16 +340,16 @@ export const ContratoDetail: React.FC = () => {
                   {regularidade.ceis?.total === 0 ? (
                     <><ShieldCheck size={16} color="var(--status-ativo-text)" /> <span style={{ color: 'var(--status-ativo-text)', fontWeight: 600 }}>Nenhuma sanção encontrada</span></>
                   ) : (
-                    <><ShieldX size={16} color="var(--status-vencido-text)" /> <span style={{ color: 'var(--status-vencido-text)', fontWeight: 600 }}>{regularidade.ceis?.total} sanção(ões) ativa(s)</span></>
+                    <><ShieldX size={16} color="var(--status-vencido-text)" /> <span style={{ color: 'var(--status-vencido-text)', fontWeight: 600 }}>{regularidade.ceis?.total} {regularidade.ceis?.total === 1 ? 'sanção ativa' : 'sanções ativas'}</span></>
                   )}
                 </div>
               )}
             </div>
 
             {/* CNEP */}
-            <div style={{ padding: '1rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--bg-tertiary)' }}>
-              <p style={{ fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.625rem', color: 'var(--text-primary)' }}>
-                C) CNEP — Empresas Punidas (CGU)
+            <div className="consulta">
+              <p className="consulta-nome">
+                CNEP, empresas punidas (CGU)
               </p>
               {regularidade.cnep?.erro ? (
                 <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
@@ -392,7 +360,7 @@ export const ContratoDetail: React.FC = () => {
                   {regularidade.cnep?.total === 0 ? (
                     <><ShieldCheck size={16} color="var(--status-ativo-text)" /> <span style={{ color: 'var(--status-ativo-text)', fontWeight: 600 }}>Nenhuma punição encontrada</span></>
                   ) : (
-                    <><ShieldX size={16} color="var(--status-vencido-text)" /> <span style={{ color: 'var(--status-vencido-text)', fontWeight: 600 }}>{regularidade.cnep?.total} punição(ões) encontrada(s)</span></>
+                    <><ShieldX size={16} color="var(--status-vencido-text)" /> <span style={{ color: 'var(--status-vencido-text)', fontWeight: 600 }}>{regularidade.cnep?.total} {regularidade.cnep?.total === 1 ? 'punição encontrada' : 'punições encontradas'}</span></>
                   )}
                 </div>
               )}
@@ -411,8 +379,8 @@ export const ContratoDetail: React.FC = () => {
                   ? <ShieldCheck size={22} color="var(--status-ativo-text)" />
                   : <ShieldX size={22} color="var(--status-vencido-text)" />}
                 <div>
-                  <p style={{ fontWeight: 700, fontSize: '0.875rem', color: contrato.fornecedor_situacao === 'APTO' ? 'var(--status-ativo-text)' : 'var(--status-vencido-text)', letterSpacing: '0.04em' }}>
-                    {contrato.fornecedor_situacao === 'APTO' ? 'FORNECEDOR APTO' : 'FORNECEDOR COM RESTRIÇÕES'}
+                  <p style={{ fontWeight: 700, fontSize: '0.875rem', color: contrato.fornecedor_situacao === 'APTO' ? 'var(--status-ativo-text)' : 'var(--status-vencido-text)' }}>
+                    {contrato.fornecedor_situacao === 'APTO' ? 'Fornecedor apto' : 'Fornecedor com restrições'}
                   </p>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>
                     {contrato.fornecedor_situacao === 'APTO'
@@ -424,7 +392,7 @@ export const ContratoDetail: React.FC = () => {
             )}
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 };

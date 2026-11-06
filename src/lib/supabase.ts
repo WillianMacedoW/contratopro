@@ -42,7 +42,7 @@ verificarConexaoSupabase().then((estaOnline) => {
 const getRelativeDate = (offsetDays: number): string => {
   const d = new Date();
   d.setDate(d.getDate() + offsetDays);
-  return d.toISOString().split('T')[0];
+  return d.toLocaleDateString('en-CA'); // AAAA-MM-DD no fuso local
 };
 
 // Semente de dados iniciais do localStorage (baseado no supabase_setup.sql)
@@ -230,6 +230,9 @@ class MockQueryBuilder {
 
   // Permite encadeamento de Promises (then/catch) de forma transparente
   then(onfulfilled?: (value: any) => any, onrejected?: (reason: any) => any) {
+    if (this._pendingUpdate) {
+      return this._executeUpdate().then(onfulfilled, onrejected);
+    }
     if (this._pendingDelete) {
       return this._executeDelete().then(onfulfilled, onrejected);
     }
@@ -353,33 +356,24 @@ class MockQueryBuilder {
     }
   }
 
-  async update(payload: any) {
+  update(payload: any) {
+    // Como no Supabase real, os filtros vêm depois: .update(...).eq(...)
+    // A execução real ocorre via then()
+    this._pendingUpdate = payload;
+    return this;
+  }
+
+  private _pendingUpdate: any = null;
+
+  private async _executeUpdate(): Promise<any> {
     try {
-      let list = JSON.parse(localStorage.getItem(`cp_mock_${this.table}`) || '[]');
-
-      // Executa os filtros acumulados para saber quais itens atualizar
-      let matching = [...list];
-      for (const filter of this.filters) {
-        if (filter.type === 'eq') {
-          matching = matching.filter((item: any) => item[filter.col] === filter.val);
-        } else if (filter.type === 'neq') {
-          matching = matching.filter((item: any) => item[filter.col] !== filter.val);
-        } else if (filter.type === 'in') {
-          matching = matching.filter((item: any) => filter.vals?.includes(item[filter.col]));
-        }
-      }
-
-      const idsToUpdate = new Set(matching.map((item: any) => item.id));
-      const updatedList = list.map((item: any) => {
-        if (idsToUpdate.has(item.id)) {
-          return {
-            ...item,
-            ...payload,
-            updated_at: new Date().toISOString()
-          };
-        }
-        return item;
-      });
+      const list = JSON.parse(localStorage.getItem(`cp_mock_${this.table}`) || '[]');
+      const idsToUpdate = new Set(this.applyFilters([...list]).map((item: any) => item.id));
+      const updatedList = list.map((item: any) =>
+        idsToUpdate.has(item.id)
+          ? { ...item, ...this._pendingUpdate, updated_at: new Date().toISOString() }
+          : item
+      );
 
       localStorage.setItem(`cp_mock_${this.table}`, JSON.stringify(updatedList));
 

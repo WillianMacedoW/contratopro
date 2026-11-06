@@ -188,13 +188,6 @@
   to   { transform: scaleX(1); }
 }
 
-.barra-vencido      { background-color: var(--red); }
-.barra-critico      { background-color: var(--red); }
-.barra-atencao      { background-color: var(--amber); }
-.barra-planejamento { background-color: var(--accent); }
-.barra-ok           { background-color: var(--green); }
-.barra-renovado     { background-color: var(--purple); }
-
 /* O tempo vencido fica antes da linha de hoje, listrado para não depender só da cor. */
 .barra-atrasada {
   border-radius: var(--radius-sm) 0 0 var(--radius-sm);
@@ -232,13 +225,6 @@
 }
 
 .regua-linha:hover .regua-etiqueta { background: var(--bg-elevated); }
-
-/* ─── Cor por nível ───────────────────────── */
-.nivel-vencido, .nivel-critico { color: var(--red); }
-.nivel-atencao      { color: var(--amber); }
-.nivel-planejamento { color: var(--accent); }
-.nivel-ok           { color: var(--green); }
-.nivel-renovado     { color: var(--purple); }
 
 /* ─── Sem espaço lateral: contrato em cima, trilha embaixo ─── */
 @media (max-width: 1200px) {

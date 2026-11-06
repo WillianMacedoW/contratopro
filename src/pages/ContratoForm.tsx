@@ -233,7 +233,7 @@ export const ContratoForm: React.FC<{ isImportMode?: boolean }> = ({ isImportMod
             <ArrowLeft size={18} />
           </button>
           <h1 className="page-title">
-            {isImportMode ? 'Importar do PNCP' : id ? 'Editar Contrato' : 'Novo Contrato'}
+            {isImportMode ? 'Importar do PNCP' : id ? 'Editar contrato' : 'Novo contrato'}
           </h1>
         </div>
         {isImportMode && (
@@ -397,7 +397,7 @@ export const ContratoForm: React.FC<{ isImportMode?: boolean }> = ({ isImportMod
       {!isImportMode && <form className="section-card" onSubmit={handleSubmit}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
           <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-            <label className="form-label">Fornecedor (Razão / CNPJ)</label>
+            <label className="form-label">Fornecedor</label>
             <input
               className="form-input"
               style={formErrors.fornecedor ? { borderColor: 'var(--red, #e53e3e)' } : {}}
@@ -420,7 +420,7 @@ export const ContratoForm: React.FC<{ isImportMode?: boolean }> = ({ isImportMod
           </div>
 
           <div className="form-group">
-            <label className="form-label">Nº Contrato</label>
+            <label className="form-label">Número do contrato</label>
             <input
               className="form-input"
               style={formErrors.numero_contrato ? { borderColor: 'var(--red, #e53e3e)' } : {}}
@@ -444,7 +444,7 @@ export const ContratoForm: React.FC<{ isImportMode?: boolean }> = ({ isImportMod
           </div>
 
           <div className="form-group">
-            <label className="form-label">Data Início</label>
+            <label className="form-label">Início</label>
             <input
               type="date"
               className="form-input"
@@ -456,7 +456,7 @@ export const ContratoForm: React.FC<{ isImportMode?: boolean }> = ({ isImportMod
           </div>
 
           <div className="form-group">
-            <label className="form-label">Data Vencimento</label>
+            <label className="form-label">Vencimento</label>
             <input
               type="date"
               className="form-input"
@@ -468,12 +468,12 @@ export const ContratoForm: React.FC<{ isImportMode?: boolean }> = ({ isImportMod
           </div>
 
           <div className="form-group">
-            <label className="form-label">Responsável / Fiscal</label>
+            <label className="form-label">Fiscal responsável</label>
             <input className="form-input" value={formData.responsavel} onChange={e => setFormData({ ...formData, responsavel: e.target.value })} />
           </div>
 
           <div className="form-group">
-            <label className="form-label">CNPJ do Fornecedor</label>
+            <label className="form-label">CNPJ do fornecedor</label>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <input
                 className="form-input"
@@ -491,7 +491,7 @@ export const ContratoForm: React.FC<{ isImportMode?: boolean }> = ({ isImportMod
           </div>
 
           <div className="form-group">
-            <label className="form-label">Tipo de Objeto</label>
+            <label className="form-label">Tipo de objeto</label>
             <select className="form-input" value={formData.tipo_objeto} onChange={e => setFormData({ ...formData, tipo_objeto: e.target.value })}>
               <option value="servico">Serviço</option>
               <option value="obra">Obra / Engenharia</option>
@@ -500,7 +500,7 @@ export const ContratoForm: React.FC<{ isImportMode?: boolean }> = ({ isImportMod
           </div>
 
           <div className="form-group">
-            <label className="form-label">Secretaria / Órgão</label>
+            <label className="form-label">Secretaria ou órgão</label>
             <select className="form-input" value={formData.secretaria_id || ''} onChange={e => setFormData({ ...formData, secretaria_id: e.target.value || null })}>
               <option value="">Sem secretaria</option>
               {secretarias.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
@@ -519,7 +519,7 @@ export const ContratoForm: React.FC<{ isImportMode?: boolean }> = ({ isImportMod
           <button type="button" className="btn-secondary" onClick={() => navigate(-1)}>Cancelar</button>
           <button type="submit" className="btn-primary" disabled={loading}>
             {loading ? <Loader2 size={18} className="spin" /> : <Save size={18} />}
-            Salvar Contrato
+            Salvar contrato
           </button>
         </div>
       </form>}
